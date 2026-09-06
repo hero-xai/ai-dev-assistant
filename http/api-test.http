@@ -42,3 +42,18 @@ GET http://localhost:8080/api/projects/1/git/commits/{commitId}
 ### Get git commit diff
 GET http://localhost:8080/api/projects/1/git/commits/{commitId}/diff
 
+
+### Create review task
+POST http://localhost:8080/api/review-tasks
+Content-Type: application/json
+
+{
+  "projectId": 1,
+  "commitId": "{commitId}"
+}
+
+### List review tasks
+GET http://localhost:8080/api/review-tasks?projectId=1
+
+### Get review task detail
+GET http://localhost:8080/api/review-tasks/1

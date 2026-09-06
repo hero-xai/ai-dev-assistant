@@ -28,6 +28,7 @@ Step 3：Project 项目管理。
 - 项目管理接口
 - Git Commit 读取接口
 - Git Diff 生成接口
+- Review Task 评审任务接口
 
 ## 本地环境
 
@@ -139,3 +140,13 @@ GET /api/projects/{projectId}/git/commits/{commitId}/diff
 ```
 
 
+
+## Review Task 评审任务接口
+
+```http
+POST /api/review-tasks
+GET /api/review-tasks?projectId=1
+GET /api/review-tasks/{id}
+```
+
+创建评审任务时，系统会读取指定项目和 commit 的 Git Diff，并把变更文件快照保存到 `review_changed_file`，为后续 AI Code Review 提供稳定输入。

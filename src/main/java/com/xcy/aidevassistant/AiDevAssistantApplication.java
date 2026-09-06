@@ -4,7 +4,7 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@MapperScan("com.xcy.aidevassistant.project.mapper")
+@MapperScan({"com.xcy.aidevassistant.project.mapper", "com.xcy.aidevassistant.review.mapper"})
 @SpringBootApplication
 public class AiDevAssistantApplication {
 
@@ -12,3 +12,4 @@ public class AiDevAssistantApplication {
         SpringApplication.run(AiDevAssistantApplication.class, args);
     }
 }
+
