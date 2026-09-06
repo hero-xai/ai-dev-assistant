@@ -3,6 +3,7 @@ package com.xcy.aidevassistant.git.controller;
 import com.xcy.aidevassistant.common.api.ApiResponse;
 import com.xcy.aidevassistant.git.application.GitCommitApplicationService;
 import com.xcy.aidevassistant.git.dto.GitCommitDetailResponse;
+import com.xcy.aidevassistant.git.dto.GitCommitDiffResponse;
 import com.xcy.aidevassistant.git.dto.GitCommitResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,5 +35,12 @@ public class GitCommitController {
             @PathVariable Long projectId,
             @PathVariable String commitId) {
         return ApiResponse.success(gitCommitApplicationService.getCommitDetail(projectId, commitId));
+    }
+
+    @GetMapping("/commits/{commitId}/diff")
+    public ApiResponse<GitCommitDiffResponse> getCommitDiff(
+            @PathVariable Long projectId,
+            @PathVariable String commitId) {
+        return ApiResponse.success(gitCommitApplicationService.getCommitDiff(projectId, commitId));
     }
 }

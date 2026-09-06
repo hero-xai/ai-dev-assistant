@@ -1,7 +1,9 @@
 package com.xcy.aidevassistant.git.application;
 
 import com.xcy.aidevassistant.git.dto.GitCommitDetailResponse;
+import com.xcy.aidevassistant.git.dto.GitCommitDiffResponse;
 import com.xcy.aidevassistant.git.dto.GitCommitResponse;
+import com.xcy.aidevassistant.git.dto.GitDiffFileResponse;
 import com.xcy.aidevassistant.git.dto.GitFileChangeResponse;
 import com.xcy.aidevassistant.project.application.ProjectApplicationService;
 import com.xcy.aidevassistant.project.domain.DevProject;
@@ -20,8 +22,10 @@ import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -30,6 +34,8 @@ import java.util.List;
 
 @Service
 public class GitCommitApplicationService {
+
+    private static final int MAX_DIFF_CHARS_PER_FILE = 20_000;
 
     private final ProjectApplicationService projectApplicationService;
 
@@ -59,12 +65,7 @@ public class GitCommitApplicationService {
 
         try (Repository repository = openRepository(project.getRepositoryPath());
              RevWalk revWalk = new RevWalk(repository)) {
-            ObjectId objectId = repository.resolve(commitId);
-            if (objectId == null) {
-                throw new IllegalArgumentException("Commit 不存在");
-            }
-
-            RevCommit commit = revWalk.parseCommit(objectId);
+            RevCommit commit = resolveCommit(repository, revWalk, commitId);
             GitCommitDetailResponse response = toCommitDetailResponse(commit);
             response.setChangedFiles(listChangedFiles(repository, commit));
             return response;
@@ -75,12 +76,46 @@ public class GitCommitApplicationService {
         }
     }
 
+    public GitCommitDiffResponse getCommitDiff(Long projectId, String commitId) {
+        DevProject project = projectApplicationService.getProjectEntity(projectId);
+
+        try (Repository repository = openRepository(project.getRepositoryPath());
+             RevWalk revWalk = new RevWalk(repository)) {
+            RevCommit commit = resolveCommit(repository, revWalk, commitId);
+            List<GitDiffFileResponse> files = listDiffFiles(repository, commit);
+
+            GitCommitDiffResponse response = new GitCommitDiffResponse();
+            fillCommitResponse(response, commit);
+            response.setFiles(files);
+            response.setTotalFiles(files.size());
+            response.setTotalAdditions(files.stream().mapToInt(GitDiffFileResponse::getAdditions).sum());
+            response.setTotalDeletions(files.stream().mapToInt(GitDiffFileResponse::getDeletions).sum());
+            return response;
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new IllegalArgumentException("生成 Git Diff 失败：" + exception.getMessage());
+        }
+    }
+
     private Repository openRepository(String repositoryPath) throws IOException {
         File directory = new File(repositoryPath);
-        return new FileRepositoryBuilder()
+        Repository repository = new FileRepositoryBuilder()
                 .findGitDir(directory)
                 .readEnvironment()
                 .build();
+        if (repository.getDirectory() == null) {
+            throw new IllegalArgumentException("该项目路径不是 Git 仓库");
+        }
+        return repository;
+    }
+
+    private RevCommit resolveCommit(Repository repository, RevWalk revWalk, String commitId) throws IOException {
+        ObjectId objectId = repository.resolve(commitId);
+        if (objectId == null) {
+            throw new IllegalArgumentException("Commit 不存在");
+        }
+        return revWalk.parseCommit(objectId);
     }
 
     private List<GitFileChangeResponse> listChangedFiles(Repository repository, RevCommit commit) throws IOException {
@@ -98,6 +133,24 @@ public class GitCommitApplicationService {
                 changes.add(toFileChangeResponse(diffFormatter, entry));
             }
             return changes;
+        }
+    }
+
+    private List<GitDiffFileResponse> listDiffFiles(Repository repository, RevCommit commit) throws IOException {
+        try (RevWalk revWalk = new RevWalk(repository);
+             DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
+            diffFormatter.setRepository(repository);
+            diffFormatter.setDetectRenames(true);
+
+            AbstractTreeIterator oldTree = createOldTreeIterator(repository, revWalk, commit);
+            AbstractTreeIterator newTree = createTreeIterator(repository, commit);
+            List<DiffEntry> entries = diffFormatter.scan(oldTree, newTree);
+
+            List<GitDiffFileResponse> files = new ArrayList<>();
+            for (DiffEntry entry : entries) {
+                files.add(toDiffFileResponse(repository, entry));
+            }
+            return files;
         }
     }
 
@@ -119,6 +172,29 @@ public class GitCommitApplicationService {
 
     private GitFileChangeResponse toFileChangeResponse(DiffFormatter diffFormatter, DiffEntry entry) throws IOException {
         GitFileChangeResponse response = new GitFileChangeResponse();
+        fillFileChangeResponse(response, diffFormatter, entry);
+        return response;
+    }
+
+    private GitDiffFileResponse toDiffFileResponse(Repository repository, DiffEntry entry) throws IOException {
+        GitDiffFileResponse response = new GitDiffFileResponse();
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+             DiffFormatter diffFormatter = new DiffFormatter(outputStream)) {
+            diffFormatter.setRepository(repository);
+            diffFormatter.setDetectRenames(true);
+            fillFileChangeResponse(response, diffFormatter, entry);
+            diffFormatter.format(entry);
+
+            String diffContent = outputStream.toString(StandardCharsets.UTF_8);
+            response.setTruncated(diffContent.length() > MAX_DIFF_CHARS_PER_FILE);
+            response.setDiffContent(response.isTruncated()
+                    ? diffContent.substring(0, MAX_DIFF_CHARS_PER_FILE)
+                    : diffContent);
+        }
+        return response;
+    }
+
+    private void fillFileChangeResponse(GitFileChangeResponse response, DiffFormatter diffFormatter, DiffEntry entry) throws IOException {
         response.setChangeType(entry.getChangeType().name());
         response.setOldPath(DiffEntry.DEV_NULL.equals(entry.getOldPath()) ? null : entry.getOldPath());
         response.setNewPath(DiffEntry.DEV_NULL.equals(entry.getNewPath()) ? null : entry.getNewPath());
@@ -131,7 +207,6 @@ public class GitCommitApplicationService {
         }
         response.setAdditions(additions);
         response.setDeletions(deletions);
-        return response;
     }
 
     private GitCommitDetailResponse toCommitDetailResponse(RevCommit commit) {

@@ -27,6 +27,7 @@ Step 3：Project 项目管理。
 - MySQL 初始化表结构设计
 - 项目管理接口
 - Git Commit 读取接口
+- Git Diff 生成接口
 
 ## 本地环境
 
@@ -134,5 +135,7 @@ http/api-test.http
 ```http
 GET /api/projects/{projectId}/git/commits?limit=10
 GET /api/projects/{projectId}/git/commits/{commitId}
+GET /api/projects/{projectId}/git/commits/{commitId}/diff
 ```
+
 

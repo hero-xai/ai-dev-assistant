@@ -38,3 +38,7 @@ GET http://localhost:8080/api/projects/1/git/commits?limit=10
 
 ### Get git commit detail
 GET http://localhost:8080/api/projects/1/git/commits/{commitId}
+
+### Get git commit diff
+GET http://localhost:8080/api/projects/1/git/commits/{commitId}/diff
+
