@@ -165,3 +165,7 @@ GET /api/review-tasks/{id}
 
 创建评审任务时，系统会读取指定项目和 commit 的 Git Diff，并把变更文件快照保存到 `review_changed_file`，为后续 AI Code Review 提供稳定输入。
 
+
+## CI Maven 配置
+
+项目中的 Maven 配置保持跨平台；Windows 本地 Maven 仓库路径只在 `scripts\build-backend.cmd` 中设置。GitHub Actions 使用 `actions/setup-java` 生成发布 GitHub Packages 所需的 Maven 凭据。
