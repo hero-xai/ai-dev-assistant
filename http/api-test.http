@@ -1,0 +1,40 @@
+### Health check
+GET http://localhost:8080/api/health
+
+### Create project
+POST http://localhost:8080/api/projects
+Content-Type: application/json
+
+{
+  "name": "ai-dev-assistant",
+  "repositoryPath": "D:\\demo\\faceAI",
+  "defaultBranch": "main",
+  "description": "AI 企业级研发助手平台"
+}
+
+### List projects
+GET http://localhost:8080/api/projects
+
+### Get project
+GET http://localhost:8080/api/projects/1
+
+### Update project
+PUT http://localhost:8080/api/projects
+Content-Type: application/json
+
+{
+  "id": 1,
+  "name": "ai-dev-assistant",
+  "repositoryPath": "D:\\demo\\faceAI",
+  "defaultBranch": "main",
+  "description": "Step 3 项目管理"
+}
+
+### Delete project
+DELETE http://localhost:8080/api/projects/1
+
+### List git commits
+GET http://localhost:8080/api/projects/1/git/commits?limit=10
+
+### Get git commit detail
+GET http://localhost:8080/api/projects/1/git/commits/{commitId}

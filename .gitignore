@@ -1,0 +1,9 @@
+target/
+.idea/
+.vscode/
+*.iml
+*.log
+logs/
+
+scripts/local-env.cmd
+src/main/resources/application-local.yml

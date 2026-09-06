@@ -1,0 +1,138 @@
+# AI 企业级研发助手平台
+
+暂定名：`ai-dev-assistant`
+
+## V1 目标
+
+面向企业软件研发场景，围绕本地 Git 项目的 Commit 变更完成：
+
+- Commit 读取
+- Changed Files 分析
+- Git Diff 生成
+- Diff 预处理
+- AI Code Review
+- 结构化 Review 报告
+- 开发变更说明生成
+
+## 当前进度
+
+Step 3：Project 项目管理。
+
+当前能力：
+
+- Spring Boot 应用可启动
+- 统一 API 响应
+- 全局异常处理
+- 健康检查接口
+- MySQL 初始化表结构设计
+- 项目管理接口
+- Git Commit 读取接口
+
+## 本地环境
+
+- Java 21：`D:\APP\dev\jdk21\jdk-21.0.12.1+1`
+- Maven：`D:\APP\dev\apache-maven-3.8.8`
+- Maven 本地仓库：`D:\APP\dev\maven_repo`
+- MySQL：`D:\APP\dev\mysql-8.4`
+- MySQL 数据目录：`D:\APP\dev\mysql-data`
+- MySQL 应用账号：`ai_dev_user`
+- DBeaver：`D:\APP\dev\dbeaver-ce`
+
+## 构建
+
+```bat
+scripts\build-backend.cmd
+```
+
+## 启动
+
+```bat
+scripts\run-backend.cmd
+```
+
+## 验证
+
+```http
+GET http://localhost:8080/api/health
+```
+
+预期返回：
+
+```json
+{
+  "code": "0",
+  "message": "success",
+  "data": {
+    "status": "UP",
+    "service": "ai-dev-assistant"
+  }
+}
+```
+
+## 数据库初始化
+
+初始化 SQL：
+
+```text
+src/main/resources/db/schema.sql
+```
+
+本地启动 MySQL：
+
+```bat
+scripts\start-mysql.cmd
+```
+
+初始化数据库和表：
+
+```bat
+scripts\init-database.cmd
+```
+
+进入 MySQL 命令行：
+
+```bat
+scripts\mysql-cli.cmd
+```
+
+也可以使用 DBeaver 可视化连接：
+
+```text
+Host: 127.0.0.1
+Port: 3306
+Database: ai_dev_assistant
+User: ai_dev_user
+Password: see scripts\local-env.cmd on your local machine
+```
+
+V1 当前设计了 5 张表：
+
+- `dev_project`
+- `review_task`
+- `review_changed_file`
+- `review_issue`
+- `generated_document`
+
+## 项目管理接口
+
+```http
+POST /api/projects
+GET /api/projects
+GET /api/projects/{id}
+PUT /api/projects
+DELETE /api/projects/{id}
+```
+
+接口测试样例：
+
+```text
+http/api-test.http
+```
+
+## Git Commit 接口
+
+```http
+GET /api/projects/{projectId}/git/commits?limit=10
+GET /api/projects/{projectId}/git/commits/{commitId}
+```
+
