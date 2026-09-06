@@ -2,6 +2,20 @@
 
 暂定名：`ai-dev-assistant`
 
+## GitHub 开源信息
+
+- Repository: https://github.com/hero-xai/ai-dev-assistant
+- License: MIT
+- Releases: 使用 `v0.1.0`、`v0.2.0`、`v0.3.0` 记录每个阶段能力
+- Packages: 已配置 GitHub Actions，可将 Maven 构建产物发布到 GitHub Packages
+
+## 阶段留痕
+
+| Version | Commit | 内容 |
+| --- | --- | --- |
+| v0.1.0 | 600837a | 初始化 Spring Boot 项目、MySQL 表结构、项目管理、Git Commit 读取 |
+| v0.2.0 | 03e8488 | 新增 Git Diff 生成接口，输出变更文件、增删行和 diffContent |
+| v0.3.0 | d1def44 | 新增 Review Task 持久化，将 commit diff 快照保存到数据库 |
 ## V1 目标
 
 面向企业软件研发场景，围绕本地 Git 项目的 Commit 变更完成：
@@ -150,3 +164,4 @@ GET /api/review-tasks/{id}
 ```
 
 创建评审任务时，系统会读取指定项目和 commit 的 Git Diff，并把变更文件快照保存到 `review_changed_file`，为后续 AI Code Review 提供稳定输入。
+
